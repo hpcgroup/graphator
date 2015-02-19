@@ -1,15 +1,9 @@
-CC	= CC
+include ../Makefile.include
 
-all: jacobi2d 
+all: 2dstencil 
 
-jacobi2d: jacobi2d.C
-	$(CC) -O3 -o jacobi2d $<
-
-trace: jacobi2d.C
-	$(CC) -o jacobi2d.trace $< $(CFLAGS) $(TRACE_LIB)
-
-scal: jacobi2d.C
-	$(PREP) $(CC) -o jacobi2d.scal $< $(CFLAGS) $(SCALIB)
+2dstencil: 2dstencil.c
+	$(CC) -O3 -o 2dstencil $<
 
 clean:
-	rm -f *.o jacobi2d charmrun
+	rm -f *.o 2dstencil charmrun
