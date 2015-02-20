@@ -8,8 +8,6 @@
 #define wrap_z(a)	(((a)+num_blocks_z)%num_blocks_z)
 #define wrap_t(a)	(((a)+num_blocks_t)%num_blocks_t)
 
-#define index(a,b,c,d)		((a)+(b)*(blockDimX+2)+(c)*(blockDimX+2)*(blockDimY+2)\
-				+(d)*(blockDimX+2)*(blockDimY+2)*(blockDimZ+2))
 #define calc_pe(a,b,c,d)	((a)+(b)*num_blocks_x+(c)*num_blocks_x*num_blocks_y \
 				+(d)*num_blocks_x*num_blocks_y*num_blocks_z)
 
@@ -17,94 +15,39 @@
 int main(int argc, char **argv) {
   int my_rank, num_pes;
 
-  if (argc != 4 && argc != 10) {
-    printf("%s [array_size] [block_size] +[no]barrier\n", argv[0]);
-    printf("%s [array_size_X] [array_size_Y] [array_size_Z] [array_size_T] [block_size_X] [block_size_Y] [block_size_Z] [block_size_T] +[no]barrier\n", argv[0]);
-    MPI_Abort(MPI_COMM_WORLD, -1);
+  if (argc != 7) {
+    printf("%s [num_pes] [num_blocks_x] [num_blocks_y] [num_blocks_z] [num_blocks_t] [msg_size]\n", argv[0]);
+    exit(EXIT_FAILURE);
   }
 
-  if(argc == 4) {
-    arrayDimT = arrayDimZ = arrayDimY = arrayDimX = atoi(argv[1]);
-    blockDimT = blockDimZ = blockDimY = blockDimX = atoi(argv[2]);
-    if(strcasecmp(argv[3], "+nobarrier") == 0)
-      noBarrier = 1;
-    else
-      noBarrier = 0;
-    if(noBarrier && myRank==0) printf("\nSTENCIL COMPUTATION WITH NO BARRIERS\n");
-  }
-  else {
-    arrayDimX = atoi(argv[1]);
-    arrayDimY = atoi(argv[2]);
-    arrayDimZ = atoi(argv[3]);
-    arrayDimT = atoi(argv[4]);
-    blockDimX = atoi(argv[5]);
-    blockDimY = atoi(argv[6]);
-    blockDimZ = atoi(argv[7]);
-    blockDimT = atoi(argv[8]);
-    if(strcasecmp(argv[9], "+nobarrier") == 0)
-      noBarrier = 1;
-    else
-      noBarrier = 0;
-    if(noBarrier && myRank==0) printf("\nSTENCIL COMPUTATION WITH NO BARRIERS\n");
-  }
+  num_pes = atoi(argv[1]);
 
-  if (arrayDimX < blockDimX || arrayDimX % blockDimX != 0) {
-    printf("array_size_X mod block_size_X != 0!\n");
-    MPI_Abort(MPI_COMM_WORLD, -1);
-  }
-  if (arrayDimY < blockDimY || arrayDimY % blockDimY != 0) {
-    printf("array_size_Y mod block_size_Y != 0!\n");
-    MPI_Abort(MPI_COMM_WORLD, -1);
-  }
-  if (arrayDimZ < blockDimZ || arrayDimZ % blockDimZ != 0) {
-    printf("array_size_Z mod block_size_Z != 0!\n");
-    MPI_Abort(MPI_COMM_WORLD, -1);
-  }
-  if (arrayDimT < blockDimT || arrayDimT % blockDimT != 0) {
-    printf("array_size_T mod block_size_T != 0!\n");
-    MPI_Abort(MPI_COMM_WORLD, -1);
-  }
+  int num_blocks_x = atoi(argv[2]);
+  int num_blocks_y = atoi(argv[3]);
+  int num_blocks_z = atoi(argv[4]);
+  int num_blocks_t = atoi(argv[5]);
+  int msg_size = atoi(argv[6]);
 
-  int num_blocks_x = arrayDimX / blockDimX;
-  int num_blocks_y = arrayDimY / blockDimY;
-  int num_blocks_z = arrayDimZ / blockDimZ;
-  int num_blocks_t = arrayDimT / blockDimT;
-
-  int iterations = 0, i, j, k, l;
-  double error = 1.0, max_error = 0.0;
-
-  if(myRank == 0) {
-    printf("Running Jacobi on %d processors with (%d, %d, %d, %d) elements\n", numPes, num_blocks_x, num_blocks_y, num_blocks_z, num_blocks_t);
-    printf("Array Dimensions: %d %d %d %d\n", arrayDimX, arrayDimY, arrayDimZ, arrayDimT);
-    printf("Block Dimensions: %d %d %d %d\n", blockDimX, blockDimY, blockDimZ, blockDimT);
-  }
-
-  double data;
-  for(myRank = 0; myRank < num_blocks_x*num_blocks_y*num_blocks_z*num_blocks_t; myRank++) {
-    
-    int myXcoord = myRank % num_blocks_x;
-    int myYcoord = (myRank % (num_blocks_x * num_blocks_y)) / num_blocks_x;
-    int myZcoord = (myRank % (num_blocks_x * num_blocks_y * num_blocks_z)) / (num_blocks_x * num_blocks_y);
-    int myTcoord = myRank / (num_blocks_x * num_blocks_y * num_blocks_z);
-
-#if !DO_COMM
-    printf("%d %d %zd\n", myRank, calc_pe(wrap_x(myXcoord-1), myYcoord, myZcoord, myTcoord), sizeof(double)*blockDimY*blockDimZ*blockDimT);
-    printf("%d %d %zd\n", myRank, calc_pe(wrap_x(myXcoord+1), myYcoord, myZcoord, myTcoord), sizeof(double)*blockDimY*blockDimZ*blockDimT);
-    printf("%d %d %zd\n", myRank, calc_pe(myXcoord, wrap_y(myYcoord-1), myZcoord, myTcoord), sizeof(double)*blockDimX*blockDimZ*blockDimT);
-    printf("%d %d %zd\n", myRank, calc_pe(myXcoord, wrap_y(myYcoord+1), myZcoord, myTcoord), sizeof(double)*blockDimX*blockDimZ*blockDimT);
-    printf("%d %d %zd\n", myRank, calc_pe(myXcoord, myYcoord, wrap_z(myZcoord-1), myTcoord), sizeof(double)*blockDimX*blockDimY*blockDimT);
-    printf("%d %d %zd\n", myRank, calc_pe(myXcoord, myYcoord, wrap_z(myZcoord+1), myTcoord), sizeof(double)*blockDimX*blockDimY*blockDimT);
-    printf("%d %d %zd\n", myRank, calc_pe(myXcoord, myYcoord, myZcoord, wrap_t(myTcoord-1)), sizeof(double)*blockDimX*blockDimY*blockDimZ);
-    printf("%d %d %zd\n", myRank, calc_pe(myXcoord, myYcoord, myZcoord, wrap_t(myTcoord+1)), sizeof(double)*blockDimX*blockDimY*blockDimZ);
+#if DEBUG
+  printf("4D Stencil on %d processors with aspect ratio (%d, %d, %d, %d)\n", num_pes, num_blocks_x, num_blocks_y, num_blocks_z, num_blocks_t);
 #endif
-    // if(myRank == 0) printf("Iteration %d %f\n", iterations, max_error);
-  } /* end of while loop */
 
-  if(myRank == 0) {
-    printf("Completed %d iterations\n", iterations);
-  }
+  for(my_rank = 0; my_rank < num_blocks_x*num_blocks_y*num_blocks_z*num_blocks_t; my_rank++) {
+    int my_x_coord = my_rank % num_blocks_x;
+    int my_y_coord = (my_rank % (num_blocks_x * num_blocks_y)) / num_blocks_x;
+    int my_z_coord = (my_rank % (num_blocks_x * num_blocks_y * num_blocks_z)) / (num_blocks_x * num_blocks_y);
+    int my_t_coord = my_rank / (num_blocks_x * num_blocks_y * num_blocks_z);
 
-  MPI_Finalize();
-  return 0;
+    printf("%d %d %zd\n", my_rank, calc_pe(wrap_x(my_x_coord-1), my_y_coord, my_z_coord, my_t_coord), msg_size);
+    printf("%d %d %zd\n", my_rank, calc_pe(wrap_x(my_x_coord+1), my_y_coord, my_z_coord, my_t_coord), msg_size);
+    printf("%d %d %zd\n", my_rank, calc_pe(my_x_coord, wrap_y(my_y_coord-1), my_z_coord, my_t_coord), msg_size);
+    printf("%d %d %zd\n", my_rank, calc_pe(my_x_coord, wrap_y(my_y_coord+1), my_z_coord, my_t_coord), msg_size);
+    printf("%d %d %zd\n", my_rank, calc_pe(my_x_coord, my_y_coord, wrap_z(my_z_coord-1), my_t_coord), msg_size);
+    printf("%d %d %zd\n", my_rank, calc_pe(my_x_coord, my_y_coord, wrap_z(my_z_coord+1), my_t_coord), msg_size);
+    printf("%d %d %zd\n", my_rank, calc_pe(my_x_coord, my_y_coord, my_z_coord, wrap_t(my_t_coord-1)), msg_size);
+    printf("%d %d %zd\n", my_rank, calc_pe(my_x_coord, my_y_coord, my_z_coord, wrap_t(my_t_coord+1)), msg_size);
+  } /* end of for loop */
+
+  exit(EXIT_FAILURE);
 } /* end function main */
 

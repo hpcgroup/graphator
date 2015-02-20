@@ -1,15 +1,9 @@
-CC	= CC
+include ../Makefile.include
 
-all: jacobi4d 
+all: 4dstencil
 
-jacobi4d: jacobi4d.C
-	$(CC) -O3 -o jacobi4d $< 
-
-trace: jacobi4d.C
-	$(CC) -o jacobi4d.trace $< $(CFLAGS) $(TRACE_LIB)
-
-scal: jacobi4d.C
-	$(PREP) $(CC) -o jacobi4d.scal $< $(CFLAGS) $(SCALIB)
+4dstencil: 4dstencil.c
+	$(CC) $(COPTS) -o 4dstencil $<
 
 clean:
-	rm -f *.o jacobi4d charmrun
+	rm -f *.o 4dstencil
