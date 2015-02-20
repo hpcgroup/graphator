@@ -1,15 +1,9 @@
-CC	= CC
+include ../Makefile.include
 
-all: multi_a2a 
+all: many2many
 
-multi_a2a: multi_a2a.C
-	$(CC) -O3 -o multi_a2a $< 
-
-trace: multi_a2a.C
-	$(CC) -o multi_a2a.trace $< $(CFLAGS) $(TRACE_LIB)
-
-scal: multi_a2a.C
-	$(PREP) $(CC) -o multi_a2a.scal $< $(CFLAGS) $(SCALIB)
+many2many: many2many.c
+	$(CC) $(COPTS) -o many2many $<
 
 clean:
-	rm -f *.o multi_a2a charmrun
+	rm -f *.o many2many
