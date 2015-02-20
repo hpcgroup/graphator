@@ -9,21 +9,19 @@
 
 
 int main(int argc, char **argv) {
-  int my_rank, num_pes;
+  int my_rank;
 
-  if (argc != 5) {
-    printf("%s [num_pes] [num_blocks_x] [num_blocks_y] [msg_size]\n", argv[0]);
+  if (argc != 4) {
+    printf("%s [num_blocks_x] [num_blocks_y] [msg_size]\n", argv[0]);
     exit(EXIT_FAILURE);
   }
 
-  num_pes = atoi(argv[1]);
-
-  int num_blocks_x = atoi(argv[2]);
-  int num_blocks_y = atoi(argv[3]);
-  int msg_size = atoi(argv[4]);
+  int num_blocks_x = atoi(argv[1]);
+  int num_blocks_y = atoi(argv[2]);
+  int msg_size = atoi(argv[3]);
 
 #if DEBUG
-  printf("2D Stencil on %d processors with aspect ratio (%d, %d)\n", num_pes, num_blocks_x, num_blocks_y);
+  printf("2D Stencil on %d processors with aspect ratio (%d, %d)\n", (num_blocks_x*num_blocks_y), num_blocks_x, num_blocks_y);
 #endif
 
   for(my_rank = 0; my_rank < num_blocks_x*num_blocks_y; my_rank++) {
