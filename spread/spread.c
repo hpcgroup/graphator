@@ -6,16 +6,15 @@
 using namespace std;
 
 int main(int argc, char**argv) {
-  if(argc != 6) {
-    printf("%s <num_pes> <min_nbors> <max_nbors> <distance> <msg_size>\n", argv[0]);
+  if(argc != 5) {
+    printf("%s <num_pes> <min_nbors> <max_nbors> <msg_size>\n", argv[0]);
     return 1;
   }
 
   int num_pes = atoi(argv[1]);
   int min_nbors = atoi(argv[2]);
   int max_nbors = atoi(argv[3]);
-  int distance = atoi(argv[4]);
-  int msg_size = atoi(argv[5]);
+  int msg_size = atoi(argv[4]);
 
   vector<int> degree;
 
@@ -29,7 +28,7 @@ int main(int argc, char**argv) {
     num_edges += degree[i];
   }
 
-  long long count = 50 * num_edges;
+  long long count = 8 * num_edges;
   num_edges /= 2;
   long long exp_num_edges = num_edges;
   
@@ -38,9 +37,7 @@ int main(int argc, char**argv) {
     count--;
     int src = rand() % num_pes;
     if(degree[src] == 0) continue;
-    int multby = 1;
-    if(rand() % 2) multby = -1;
-    int dst = ((src + multby*(rand() % distance)) + num_pes) % num_pes;
+    int dst = rand() % num_pes;
     if(degree[dst] == 0) continue;
     if(src == dst) continue;
     degree[src]--;
