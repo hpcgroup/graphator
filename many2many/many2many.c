@@ -5,7 +5,7 @@
 
 int main(int argc, char **argv)
 {
-  int my_rank;
+  int my_rank, ycoord;
 
   if(argc != 5) {
     printf("%s [num_blocks_x] [num_blocks_y] [num_blocks_z] [msg_size]\n", argv[0]);
@@ -21,7 +21,7 @@ int main(int argc, char **argv)
     int my_x_coord = my_rank % num_blocks_x;
     int my_y_coord = (my_rank % (num_blocks_x * num_blocks_y)) / num_blocks_x;
     int my_z_coord = (my_rank % (num_blocks_x * num_blocks_y * num_blocks_z)) / (num_blocks_x * num_blocks_y);
-    for(int ycoord = 0; ycoord < num_blocks_y; ycoord++) {
+    for(ycoord = 0; ycoord < num_blocks_y; ycoord++) {
       if(ycoord == my_y_coord) continue;
       printf("%d %d %d\n", my_rank, calc_pe(my_x_coord,ycoord,my_z_coord), msg_size);
     }
