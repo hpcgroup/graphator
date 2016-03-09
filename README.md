@@ -10,11 +10,13 @@ communication.
 
 ### Directory Structure
 
+```
 2D Structured Grid	2dstencil
 4D Structured Grid	4dstencil
 Many to many		many2many
 Unstructured Mesh	umesh
 Uniform Spread		spread
+```
 
 ### Release
 
